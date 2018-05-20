@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace kennisopdracht
 {
-   public class mandelbrot:Form
+    public class mandelbrot : Form
     {
         double midden_X;
         double midden_Y;
@@ -18,6 +18,9 @@ namespace kennisopdracht
         Bitmap Bm;
         TextBox textbox_midden_X;
         TextBox textbox_midden_Y;
+        TextBox textbox_schaal;
+      
+
         //constructor ofwel methode die object in elkaar zet
         public mandelbrot()
         {
@@ -32,13 +35,13 @@ namespace kennisopdracht
             label_midden_X.Location = new Point(65, 20);
             label_midden_X.Size = new Size(100, 40);
             label_midden_X.Font = new Font("Arial", 14);
-           
+
             Label label_midden_Y = new Label();
             label_midden_Y.Text = "Midden y:";
             label_midden_Y.Location = new Point(350, 20);
             label_midden_Y.Size = new Size(100, 40);
             label_midden_Y.Font = new Font("Arial", 14);
-         
+
             Label label_schaal = new Label();
             label_schaal.Text = "Schaal:";
             label_schaal.Location = new Point(65, 80);
@@ -63,7 +66,7 @@ namespace kennisopdracht
             textbox_midden_Y.Location = new Point(460, 20);
             textbox_midden_Y.Size = new Size(60, 40);
 
-            TextBox textbox_schaal = new TextBox();
+            textbox_schaal = new TextBox();
             textbox_schaal.Text = "0.01";
             textbox_schaal.Location = new Point(175, 80);
             textbox_schaal.Size = new Size(60, 40);
@@ -74,13 +77,13 @@ namespace kennisopdracht
             textbox_max.Size = new Size(60, 40);
             #endregion
 
+            #region Ok knop declaratie
             Button Ok_knop = new Button();
             Ok_knop.Text = "Ok";
             Ok_knop.Location = new Point(600, 20);
             Ok_knop.Size = new Size(80, 30);
-            Ok_knop.Click += this.button_OK_Click;
-
-            Bm = new Bitmap(400, 400);
+            Ok_knop.Click += this.knop_OK_Click;
+            #endregion
 
             #region control declaraties
 
@@ -97,17 +100,18 @@ namespace kennisopdracht
             this.Controls.Add(Ok_knop);
             #endregion
 
-
+            Bm = new Bitmap(400, 400);
 
             this.Paint += this.teken_bitmap;
         }
 
-        private void button_OK_Click(object sender, EventArgs e)
+        private void knop_OK_Click(object sender, EventArgs e)
         {
             //update de x en y waarden voor de mandelbrot op het moment dat je Ok klikt
             midden_X = double.Parse(textbox_midden_X.Text);
             midden_Y = double.Parse(textbox_midden_Y.Text);
-            // doe ook nog schaal en max. 
+            schaal = double.Parse(textbox_schaal.Text);
+            
 
             // bereken een nieuwe bitmap.
             this.bereken_bitmap();
@@ -119,20 +123,102 @@ namespace kennisopdracht
         // mandelbrot berekenen niet in paint event doen, maar het tekenen wel. 
         // paint event alleen gebruiken om te tekenen.
 
-        
+
         private void teken_bitmap(Object obj, PaintEventArgs pea)
         {
             Point bitmaplocatie = new Point(200, 200);
             pea.Graphics.DrawImage(Bm, bitmaplocatie);
         }
-
+ 
         private void bereken_bitmap()
         {
+            for (int x = 0; x < Bm.Width; x++)
+            {
+                for (int y = 0; y < Bm.Height; y++)
+                {
+                    double eenX;
+                    eenX = BepaalGrafiekX((double)x, schaal);
+
+                    double eenY;
+                    eenY = BepaalGrafiekY((double)y, schaal);
+
+                    // roep methode aan om mandelgetal te berekenen
+                    int mandelgetal;
+                    mandelgetal = mandelgetallen(eenX, eenY);
+
+                    if (mandelgetal % 2 == 0)
+                    {
+                        Bm.SetPixel(x, y, Color.White);
+                    }
+                    else
+                    {
+                        Bm.SetPixel(x, y, Color.Black);
+                    }
+                }
+            }
+        }
+
+        private int mandelgetallen(double x, double y)
+        {
+            double a = 0;
+            double b = 0;
+            double oudeA = 0;
+            double oudeB = 0;
+            bool getalgevonden = false;
+            int mandelgetal = 0;
+            int maximumcounter = 0;
+
+            while (!getalgevonden && maximumcounter < 100)
+            {
+                a = oudeA * oudeA - oudeB * oudeB + x;
+                b = 2 * oudeA * oudeB + y;
+                oudeA = a;
+                oudeB = b;
+                mandelgetal += 1;
+                maximumcounter += 1;
+
+                // Als berekenDeAfstand een waarde geeft groter dan 2, stop deze methode.
+                double afstand = berekenDeAfstand(a, b);
+                if (afstand >= 2)
+                {
+                    getalgevonden = true;
+                }
+            }
+
+            if (getalgevonden)
+                return mandelgetal;
+            else
+                return 1;
 
         }
-        // test commit
+       // bereken de afstand tussen a,b en x,y
+        private double berekenDeAfstand(double a, double b)
+        {
+            double afstand;
+            afstand = Math.Sqrt(Math.Pow(a - 0, 2) + Math.Pow(b - 0, 2));
+            return afstand;
+        }
 
+       // Methodes met formules om coordinaten van het assenstelsel te bepalen. Helperfuncties van methode om bitmap te tekenen. 
+        private double BepaalGrafiekX(double pixel_x, double schaal)
+        {
+            double wiskundige_x = ((pixel_x - 200) * schaal);
 
-            
+            wiskundige_x += midden_X;
+
+             return wiskundige_x;
+
+        }
+
+        private double BepaalGrafiekY(double pixel_y, double schaal)
+        {
+            double wiskundige_y = ((200 - pixel_y) * schaal);
+
+            wiskundige_y += midden_Y;
+
+            return wiskundige_y;
+         }
+
     }
+
 }
