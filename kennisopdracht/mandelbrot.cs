@@ -1,4 +1,11 @@
-﻿using System;
+﻿/* Dit programma tekent een mandelbrotfiguur. Aan de hand van twee wiskundige formules, die herhaaldelijk worden uitgevoerd, worden getallen gegenereerd, 
+ * zogeheten mandelgetallen. Aan de hand van de mandelgetallen kan er een figuur getekend worden op een assenstelsel. In dit programma wordt het assenstelsel 
+ * getekend op een bitmap. De waardes in de grafische userinterface kunnen aangepast worden, zodat er verder op het figuur ingezoomd kan worden. 
+ * Deze opdracht is afkomstig van de cursus imperatief programmeren van de Universiteit Utrecht. 
+ * Voor meer informatie zie: http://www.cs.uu.nl/docs/vakken/imp/ -> Practicum -> Opdracht 1 "Mandelbrot". 
+ * */
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -15,15 +22,18 @@ namespace kennisopdracht
         double midden_X;
         double midden_Y;
         double schaal;
+        int max;
         Bitmap Bm;
         TextBox textbox_midden_X;
         TextBox textbox_midden_Y;
         TextBox textbox_schaal;
+        TextBox textbox_max;
       
 
-        //constructor ofwel methode die object in elkaar zet
+        //constructor, methode die object in elkaar zet
         public mandelbrot()
         {
+            
             this.Size = new Size(1000, 1000);
             this.Location = new Point(0, 0);
             this.Text = "Mandelbrot";
@@ -71,7 +81,7 @@ namespace kennisopdracht
             textbox_schaal.Location = new Point(175, 80);
             textbox_schaal.Size = new Size(60, 40);
 
-            TextBox textbox_max = new TextBox();
+            textbox_max = new TextBox();
             textbox_max.Text = "100";
             textbox_max.Location = new Point(460, 80);
             textbox_max.Size = new Size(60, 40);
@@ -100,18 +110,30 @@ namespace kennisopdracht
             this.Controls.Add(Ok_knop);
             #endregion
 
-            Bm = new Bitmap(400, 400);
+            Bm = new Bitmap(600, 600);
+            schaal = 0.01;
+            max = int.Parse(textbox_max.Text);
 
             this.Paint += this.teken_bitmap;
+            this.bereken_bitmap();
         }
 
         private void knop_OK_Click(object sender, EventArgs e)
         {
-            //update de x en y waarden voor de mandelbrot op het moment dat je Ok klikt
-            midden_X = double.Parse(textbox_midden_X.Text);
-            midden_Y = double.Parse(textbox_midden_Y.Text);
-            schaal = double.Parse(textbox_schaal.Text);
-            
+            //update de x, y waarden, de schaal en max-waarde voor het mandelbrotfiguur op het moment dat je Ok klikt
+            string middenX_text = textbox_midden_X.Text;
+            middenX_text = middenX_text.Replace('.', ',');
+            midden_X = Convert.ToDouble(middenX_text);
+
+            string middenY_text = textbox_midden_Y.Text;
+            middenY_text = middenY_text.Replace('.', ',');
+            midden_Y = Convert.ToDouble(middenY_text);
+           
+            string schaal_text = textbox_schaal.Text;
+            schaal_text = schaal_text.Replace('.', ',');
+            schaal = Convert.ToDouble(schaal_text);
+
+            max = int.Parse(textbox_max.Text);
 
             // bereken een nieuwe bitmap.
             this.bereken_bitmap();
@@ -120,22 +142,23 @@ namespace kennisopdracht
             this.Invalidate();
         }
 
-        // mandelbrot berekenen niet in paint event doen, maar het tekenen wel. 
-        // paint event alleen gebruiken om te tekenen.
+        
 
-
+        // methode om dit bitmap te tekenen.
         private void teken_bitmap(Object obj, PaintEventArgs pea)
         {
             Point bitmaplocatie = new Point(200, 200);
             pea.Graphics.DrawImage(Bm, bitmaplocatie);
         }
- 
+
+        // methode om het mandelbrotfiguur te tekenen. Roept methodes aan om mandelgetallen te berekenen. 
         private void bereken_bitmap()
         {
             for (int x = 0; x < Bm.Width; x++)
             {
                 for (int y = 0; y < Bm.Height; y++)
                 {
+                    // roep methodes aan om x- en y-coördinaten te berekenen
                     double eenX;
                     eenX = BepaalGrafiekX((double)x, schaal);
 
@@ -157,7 +180,7 @@ namespace kennisopdracht
                 }
             }
         }
-
+        // methode om de mandelgetallen te berekenen.
         private int mandelgetallen(double x, double y)
         {
             double a = 0;
@@ -166,18 +189,16 @@ namespace kennisopdracht
             double oudeB = 0;
             bool getalgevonden = false;
             int mandelgetal = 0;
-            int maximumcounter = 0;
 
-            while (!getalgevonden && maximumcounter < 100)
+            while (!getalgevonden && mandelgetal < max)
             {
                 a = oudeA * oudeA - oudeB * oudeB + x;
                 b = 2 * oudeA * oudeB + y;
                 oudeA = a;
                 oudeB = b;
                 mandelgetal += 1;
-                maximumcounter += 1;
 
-                // Als berekenDeAfstand een waarde geeft groter dan 2, stop deze methode.
+                // Roep methode aan om afstand tussen ccoördinaten te berekenen. Als berekenDeAfstand een waarde geeft groter dan 2, stop deze methode.
                 double afstand = berekenDeAfstand(a, b);
                 if (afstand >= 2)
                 {
@@ -191,7 +212,7 @@ namespace kennisopdracht
                 return 1;
 
         }
-       // bereken de afstand tussen a,b en x,y
+       // bereken de afstand tussen a,b en x,y. Helperfunctie van methode om mandelgetallen te berekenen. 
         private double berekenDeAfstand(double a, double b)
         {
             double afstand;
@@ -199,24 +220,25 @@ namespace kennisopdracht
             return afstand;
         }
 
-       // Methodes met formules om coordinaten van het assenstelsel te bepalen. Helperfuncties van methode om bitmap te tekenen. 
+        // Methode om x-ccoördinaten van het assenstelsel te bepalen. Helperfunctie van methode om bitmap te tekenen. 
         private double BepaalGrafiekX(double pixel_x, double schaal)
         {
-            double wiskundige_x = ((pixel_x - 200) * schaal);
+            double assenstelsel_X = ((pixel_x - (Bm.Width / 2)) * schaal);
 
-            wiskundige_x += midden_X;
+            assenstelsel_X += midden_X;
 
-             return wiskundige_x;
+             return assenstelsel_X;
 
         }
 
+        // Methode om y-coördinaten van het assenstelsel te bepalen. Tweede helperfunctie van methode om bitmap te tekeken. 
         private double BepaalGrafiekY(double pixel_y, double schaal)
         {
-            double wiskundige_y = ((200 - pixel_y) * schaal);
+            double assenstelsel_Y = (((Bm.Height/2) - pixel_y) * schaal);
 
-            wiskundige_y += midden_Y;
+            assenstelsel_Y += midden_Y;
 
-            return wiskundige_y;
+            return assenstelsel_Y;
          }
 
     }
